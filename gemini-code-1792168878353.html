@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilim Arşivi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-300">
+
+    <!-- Üst Menü -->
+    <header class="sticky top-0 z-50 bg-white/80 dark:bg-darkCard/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="showHome()">
+                <span class="text-2xl">🔬</span>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Bilim Arşivi</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Tema Değiştir">
+                    <span id="themeIcon">☀️</span>
+                </button>
+                <div id="authMenu" class="flex items-center space-x-2">
+                    <button onclick="openModal('login')" class="px-4 py-2 text-sm font-medium rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition">Giriş Yap</button>
+                    <button onclick="openModal('register')" class="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">Kayıt Ol</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        
+        <!-- Ana Sayfa Görünümü -->
+        <div id="homeView">
+            <!-- Arama ve Karşılama -->
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <h2 class="text-3xl font-extrabold mb-4">Bilim İnsanları Arşivi</h2>
+                <p class="text-slate-600 dark:text-slate-400 mb-6">Bilim dünyasına yön veren isimlerin hayatı, çalışmaları ve kaynakçalarını keşfedin.</p>
+                <div class="relative">
+                    <input type="text" id="searchInput" oninput="filterScientists()" placeholder="Bilim insanı veya konu ara..." class="w-full px-5 py-4 pl-12 rounded-2xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition">
+                    <span class="absolute left-4 top-4 text-xl text-slate-400">🔍</span>
+                </div>
+            </div>
+
+            <!-- Yönetici Kontrol Paneli Bildirimi -->
+            <div id="adminNotice" class="hidden mb-8 p-4 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">👑</span>
+                    <div>
+                        <h4 class="font-semibold text-indigo-900 dark:text-indigo-200">Yönetici Modu Aktif</h4>
+                        <p class="text-sm text-indigo-700 dark:text-indigo-400">Yeni bilim insanı ekleme yetkisine sahipsiniz.</p>
+                    </div>
+                </div>
+                <button onclick="openAddScientistModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition">+ Yeni Bilim İnsanı Ekle</button>
+            </div>
+
+            <!-- Öne Çıkan Kartlar Listesi -->
+            <div id="scientistGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Kartlar JavaScript ile doldurulacak -->
+            </div>
+        </div>
+
+        <!-- Detay Görünümü -->
+        <div id="detailView" class="hidden">
+            <button onclick="showHome()" class="mb-6 inline-flex items-center space-x-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                <span>←</span>
+                <span>Ana Sayfaya Dön</span>
+            </button>
+            <div id="detailContent" class="bg-white dark:bg-darkCard rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
+                <!-- Detay içerik buraya gelecek -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Giriş / Kayıt Modalı -->
+    <div id="authModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-xl relative">
+            <button onclick="closeModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">&times;</button>
+            
+            <h3 id="modalTitle" class="text-xl font-bold mb-6 text-center">Giriş Yap</h3>
+            
+            <div id="authError" class="hidden mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-sm rounded-lg text-center"></div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div id="schoolNameField">
+                    <label class="block text-sm font-medium mb-1">Okul İsmi</label>
+                    <input type="text" id="schoolNameInput" placeholder="Örn: Atatürk Anadolu Lisesi" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" id="usernameLabel">Okul Numarası / Admin ID</label>
+                    <input type="text" id="usernameInput" required placeholder="Örn: 1245 veya admin123" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Şifre</label>
+                    <input type="password" id="passwordInput" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" id="modalSubmitBtn" class="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition">Giriş Yap</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Yeni Bilim İnsanı Ekleme Modalı (Yalnızca Admin) -->
+    <div id="addScientistModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-darkCard w-full max-w-2xl rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="closeAddScientistModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold">&times;</button>
+            <h3 class="text-xl font-bold mb-6">Yeni Bilim İnsanı Ekle</h3>
+            
+            <form onsubmit="handleAddNewScientist(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Bilim İnsanı Adı ve Soyadı</label>
+                    <input type="text" id="newSciName" required placeholder="Örn: Nikola Tesla" class="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Giriş Bölümü</label>
+                    <textarea id="newSciIntro" required rows="2" placeholder="Kısa özet ve giriş bilgisi..." class="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Gelişme Bölümü</label>
+                    <textarea id="newSciBody" required rows="4" placeholder="Ana çalışmaları, buluşları..." class="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Sonuç Bölümü</label>
+                    <textarea id="newSciConclusion" required rows="2" placeholder="Bilim dünyasına mirası ve etkileri..." class="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Kaynakça</label>
+                    <textarea id="newSciSources" required rows="2" placeholder="Kullanılan kaynaklar..." class="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition">Kaydet ve Yayınla</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Uygulama Mantığı -->
+    <script>
+        // Başlangıç Verileri
+        const defaultScientists = [
+            {
+                id: 'aziz-sancar',
+                name: 'Aziz Sancar',
+                title: 'Biyokyager & Nobel Ödüllü Bilim İnsanı',
+                intro: 'DNA onarım mekanizmaları üzerine yaptığı çığır açan çalışmalarla 2015 Nobel Kimya Ödülü\'nü kazanmıştır.',
+                body: 'Mardin\'in Savur ilçesinde doğan Aziz Sancar, İstanbul Üniversitesi Tıp Fakültesi\'ni bitirmiştir. Moleküler biyoloji alanında özellikle hücrelerin hasar gören DNA\'ları nasıl onardığını ve genetik bilgiyi nasıl koruduğunu haritalandıran DNA onarımı (eksiton onarımı) üzerine öncü keşifler yapmıştır.',
+                conclusion: 'Çalışmaları kanser tedavisinde kullanılan ilaçların geliştirilmesinde ve DNA hasarlarının anlaşılmasında temel oluşturmaktadır.',
+                sources: 'Nobel Prize Archives, National Academy of Sciences yayınları.',
+                subSections: []
+            },
+            {
+                id: 'marie-curie',
+                name: 'Marie Curie',
+                title: 'Fizikçi & Kimyager',
+                intro: 'Radyoaktivite üzerine öncü çalışmalarıyla iki farklı alanda Nobel Ödülü kazanan ilk bilim insanıdır.',
+                body: 'Varşova\'da doğan Curie, radyoaktif elementler olan Polonyum ve Radyum\'u keşfetmiştir. X-ışını teknolojisinin savaş alanlarında kullanılabilmesi için mobil röntgen üniteleri geliştirmiştir.',
+                conclusion: 'Bilim dünyasında kadınların rolünü güçlendirmiş ve nükleer fizik ile radyoterapi alanlarının önünü açmıştır.',
+                sources: 'The Madame Curie Blog, Historical Scientific Records.',
+                subSections: []
+            },
+            {
+                id: 'albert-einstein',
+                name: 'Albert Einstein',
+                title: 'Teorik Fizikçi',
+                intro: 'Modern fiziğin sütunlarından biri olan Görelilik (Relativite) Teorisi\'ni geliştiren dahi fizikçidir.',
+                body: '1905 yılında yayımladığı makalelerle kütle-enerji eşdeğerliliğini ($E=mc^2$) ortaya koymuş, fotoelektrik etki açıklamasıyla 1921 Nobel Fizik Ödülü\'nü almıştır.',
+                conclusion: 'Evren anlayışımızı kökten değiştirerek astrofizik, kozmoloji ve kuantum mekaniği çalışmalarına ilham kaynağı olmuştur.',
+                sources: 'Einstein Papers Project, Princeton University Press.',
+                subSections: []
+            }
+        ];
+
+        // Veri Depolama Yönetimi
+        function getScientists() {
+            const stored = localStorage.getItem('science_scientists');
+            if (!stored) {
+                localStorage.setItem('science_scientists', JSON.stringify(defaultScientists));
+                return defaultScientists;
+            }
+            return JSON.parse(stored);
+        }
+
+        function saveScientists(data) {
+            localStorage.setItem('science_scientists', JSON.stringify(data));
+        }
+
+        function getUsers() {
+            return JSON.parse(localStorage.getItem('science_users') || '[]');
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem('science_users', JSON.stringify(users));
+        }
+
+        function getCurrentUser() {
+            return JSON.parse(localStorage.getItem('science_current_user') || 'null');
+        }
+
+        function setCurrentUser(user) {
+            if (user) {
+                localStorage.setItem('science_current_user', JSON.stringify(user));
+            } else {
+                localStorage.removeItem('science_current_user');
+            }
+            updateAuthUI();
+        }
+
+        // Tema Ayarları
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                document.getElementById('themeIcon').textContent = '🌙';
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                document.getElementById('themeIcon').textContent = '☀️';
+            }
+        }
+
+        // Arayüz Başlangıç Durumu
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').textContent = '🌙';
+            } else {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').textContent = '☀️';
+            }
+            updateAuthUI();
+            renderScientists();
+        });
+
+        // Yetkilendirme UI Güncelleme
+        function updateAuthUI() {
+            const user = getCurrentUser();
+            const authMenu = document.getElementById('authMenu');
+            const adminNotice = document.getElementById('adminNotice');
+
+            if (user) {
+                const isAdmin = user.isAdmin;
+                authMenu.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs font-semibold text-blue-600 dark:text-blue-400">${user.schoolName || 'Yönetici'}</div>
+                            <div class="text-sm font-bold">${user.username}</div>
+                        </div>
+                        <button onclick="logout()" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 transition">Çıkış</button>
+                    </div>
+                `;
+                if (isAdmin) {
+                    adminNotice.classList.remove('hidden');
+                } else {
+                    adminNotice.classList.add('hidden');
+                }
+            } else {
+                authMenu.innerHTML = `
+                    <button onclick="openModal('login')" class="px-4 py-2 text-sm font-medium rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition">Giriş Yap</button>
+                    <button onclick="openModal('register')" class="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">Kayıt Ol</button>
+                `;
+                adminNotice.classList.add('hidden');
+            }
+        }
+
+        function logout() {
+            setCurrentUser(null);
+            showHome();
+        }
+
+        // Modal Yönetimi
+        let currentAuthMode = 'login';
+
+        function openModal(mode) {
+            currentAuthMode = mode;
+            const modal = document.getElementById('authModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalSubmitBtn = document.getElementById('modalSubmitBtn');
+            const schoolField = document.getElementById('schoolNameField');
+            const errorDiv = document.getElementById('authError');
+            
+            errorDiv.classList.add('hidden');
+            document.getElementById('authForm').reset();
+
+            if (mode === 'login') {
+                modalTitle.textContent = 'Giriş Yap';
+                modalSubmitBtn.textContent = 'Giriş Yap';
+                schoolField.style.display = 'none';
+            } else {
+                modalTitle.textContent = 'Öğrenci Kayıt Ol';
+                modalSubmitBtn.textContent = 'Kayıt Ol';
+                schoolField.style.display = 'block';
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const schoolName = document.getElementById('schoolNameInput').value.trim();
+            const username = document.getElementById('usernameInput').value.trim();
+            const password = document.getElementById('passwordInput').value.trim();
+            const errorDiv = document.getElementById('authError');
+
+            // Admin Kontrolü
+            if (username === 'admin123' && password === '123') {
+                setCurrentUser({ username: 'Admin', schoolName: 'Sistem Yöneticisi', isAdmin: true });
+                closeModal();
+                renderScientists();
+                return;
+            }
+
+            if (currentAuthMode === 'register') {
+                if (!schoolName || !username || !password) {
+                    errorDiv.textContent = 'Lütfen tüm alanları doldurun.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+                const users = getUsers();
+                if (users.find(u => u.username === username)) {
+                    errorDiv.textContent = 'Bu okul numarası ile zaten kayıt olunmuş.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+                const newUser = { schoolName, username, password, isAdmin: false };
+                users.push(newUser);
+                saveUsers(users);
+                setCurrentUser(newUser);
+                closeModal();
+            } else {
+                // Giriş Yap
+                const users = getUsers();
+                const found = users.find(u => u.username === username && u.password === password);
+                if (found) {
+                    setCurrentUser(found);
+                    closeModal();
+                } else {
+                    errorDiv.textContent = 'Hatalı okul numarası veya şifre!';
+                    errorDiv.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Admin Modalı
+        function openAddScientistModal() {
+            document.getElementById('addScientistModal').classList.remove('hidden');
+        }
+
+        function closeAddScientistModal() {
+            document.getElementById('addScientistModal').classList.add('hidden');
+        }
+
+        function handleAddNewScientist(e) {
+            e.preventDefault();
+            const name = document.getElementById('newSciName').value.trim();
+            const intro = document.getElementById('newSciIntro').value.trim();
+            const body = document.getElementById('newSciBody').value.trim();
+            const conclusion = document.getElementById('newSciConclusion').value.trim();
+            const sources = document.getElementById('newSciSources').value.trim();
+
+            const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            const scientists = getScientists();
+
+            scientists.unshift({
+                id,
+                name,
+                title: 'Bilim İnsanı',
+                intro,
+                body,
+                conclusion,
+                sources,
+                subSections: []
+            });
+
+            saveScientists(scientists);
+            closeAddScientistModal();
+            renderScientists();
+        }
+
+        // Kartları Listeleme
+        function renderScientists(filterText = '') {
+            const grid = document.getElementById('scientistGrid');
+            const scientists = getScientists();
+            
+            const filtered = scientists.filter(s => 
+                s.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                s.intro.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">Aradığınız kriterlere uygun bilim insanı bulunamadı.</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(s => `
+                <div onclick="showDetail('${s.id}')" class="bg-white dark:bg-darkCard rounded-2xl p-6 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 cursor-pointer shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-2xl">🔬</span>
+                            <span class="text-xs font-semibold px-2.5 py-1 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-full">Arşiv Kartı</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-1">${s.name}</h3>
+                        <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mb-3">${s.title}</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">${s.intro}</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-400 font-medium">
+                        <span>İncele →</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterScientists() {
+            const query = document.getElementById('searchInput').value;
+            renderScientists(query);
+        }
+
+        // Detay Sayfası
+        function showDetail(id) {
+            document.getElementById('homeView').classList.add('hidden');
+            document.getElementById('detailView').classList.remove('hidden');
+
+            const scientists = getScientists();
+            const s = scientists.find(item => item.id === id);
+            if (!s) return;
+
+            const user = getCurrentUser();
+
+            let html = `
+                <div class="mb-6 border-b border-slate-200 dark:border-slate-700 pb-6">
+                    <h2 class="text-3xl font-extrabold mb-2">${s.name}</h2>
+                    <p class="text-blue-600 dark:text-blue-400 font-medium">${s.title}</p>
+                </div>
+
+                <div class="space-y-8">
+                    <!-- Giriş -->
+                    <section>
+                        <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mb-2">1. Giriş</h3>
+                        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">${s.intro}</p>
+                    </section>
+
+                    <!-- Gelişme -->
+                    <section>
+                        <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mb-2">2. Gelişme</h3>
+                        <p class="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">${s.body}</p>
+                    </section>
+
+                    <!-- Sonuç -->
+                    <section>
+                        <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mb-2">3. Sonuç</h3>
+                        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">${s.conclusion}</p>
+                    </section>
+
+                    <!-- Ekstra Eklenen Alt Başlıklar -->
+                    ${s.subSections && s.subSections.length > 0 ? `
+                        <div class="space-y-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <h3 class="text-lg font-bold text-indigo-600 dark:text-indigo-400">Ek Bilgiler & Alt Başlıklar</h3>
+                            ${s.subSections.map((sub, idx) => `
+                                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                                    <h4 class="font-bold text-md mb-1">${idx + 1}. ${sub.title}</h4>
+                                    <p class="text-sm text-slate-600 dark:text-slate-400">${sub.content}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <!-- Kaynakça -->
+                    <section class="pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <h3 class="text-lg font-bold text-slate-500 mb-2">4. Kaynakça</h3>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 italic">${s.sources}</p>
+                    </section>
+                </div>
+            `;
+
+            // Üye veya Admin ise alt başlık ekleme formu göster
+            if (user) {
+                html += `
+                    <div class="mt-12 p-6 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold mb-4 text-md">Bu Konuya Alt Başlık / Not Ekle</h4>
+                        <form onsubmit="handleAddSubSection(event, '${s.id}')" class="space-y-4">
+                            <div>
+                                <input type="text" id="subTitle" required placeholder="Alt Başlık Adı" class="w-full px-4 py-2 rounded-xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            </div>
+                            <div>
+                                <textarea id="subContent" required rows="3" placeholder="Bilgi veya açıklama içeriği..." class="w-full px-4 py-2 rounded-xl bg-white dark:bg-darkCard border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+                            </div>
+                            <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition">Alt Başlık Ekle</button>
+                        </form>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="mt-12 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-center text-sm text-blue-600 dark:text-blue-400">
+                        Alt başlık ve not eklemek için lütfen <button onclick="openModal('login')" class="font-bold underline">giriş yapın</button>.
+                    </div>
+                `;
+            }
+
+            document.getElementById('detailContent').innerHTML = html;
+        }
+
+        function showHome() {
+            document.getElementById('detailView').classList.add('hidden');
+            document.getElementById('homeView').classList.remove('hidden');
+            renderScientists();
+        }
+
+        function handleAddSubSection(e, sciId) {
+            e.preventDefault();
+            const title = document.getElementById('subTitle').value.trim();
+            const content = document.getElementById('subContent').value.trim();
+
+            const scientists = getScientists();
+            const sci = scientists.find(item => item.id === sciId);
+            if (sci) {
+                if (!sci.subSections) sci.subSections = [];
+                sci.subSections.push({ title, content });
+                saveScientists(scientists);
+                showDetail(sciId);
+            }
+        }
+    </script>
+</body>
+</html>
